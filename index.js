@@ -27,7 +27,7 @@ app.post('/doctors', async (req, res) => {
   try {
     const data = await fs.readFile(DB_FILE, 'utf8');
     const doctors = JSON.parse(data).doctors;
-    newDoctor.id = doctors.length;
+    newDoctor.id = doctors.length + 1;
     doctors.push(newDoctor);
     await fs.writeFile(DB_FILE, JSON.stringify({doctors}));
     res.status(201).json({message: 'Doctor created successfully'});
@@ -48,6 +48,7 @@ app.put('/doctors/:id/availability', async (req, res) => {
       if (doctor.id === doctorId) {
         doctor.availability = updatedAvailability;
       }
+      console.log('updatedDoc', doctor);
       return doctor;
     });
     await fs.writeFile(DB_FILE, JSON.stringify({doctors}));
