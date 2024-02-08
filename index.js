@@ -27,7 +27,7 @@ app.post('/doctors', async (req, res) => {
   try {
     const data = await fs.readFile(DB_FILE, 'utf8');
     const doctors = JSON.parse(data).doctors;
-    newDoctor.id = doctors.length + 1;
+    newDoctor.id = String(doctors.length + 1);
     doctors.push(newDoctor);
     await fs.writeFile(DB_FILE, JSON.stringify({doctors}));
     res.status(201).json({message: 'Doctor created successfully'});
