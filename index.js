@@ -1,52 +1,61 @@
-const jsonServer = require('json-server'); // importing json-server library
-const server = jsonServer.create();
-const router = jsonServer.router('db.json');
-const middlewares = jsonServer.defaults();
-const port = process.env.PORT || 8080; //  chose port from here like 8080, 3001
+const express = require('express');
+const fs = require('fs').promises;
 
-server.use(middlewares);
-server.use(jsonServer.bodyParser);
+const app = express();
+const PORT = process.env.PORT || 3000;
+const DB_FILE = 'db.json';
 
-server.post('/book-appointment', (req, res) => {
-  const {doctorId, day, startTime} = req.body;
+app.use(express.json());
 
-  // Access the db object
-  const db = router.db;
-
-  // Find the doctor by ID
-  const doctor = db.get('doctors').find({id: doctorId}).value();
-
-  if (!doctor) {
-    return res.status(404).json({error: 'Doctor not found'});
-  }
-
-  // Find the availability slot to update
-  const availabilitySlot = doctor.availability[day].find(
-    (slot) => slot.start === startTime
-  );
-  if (!availabilitySlot) {
-    return res.status(404).json({error: 'Appointment slot not found'});
-  }
-
-  // Update the booked status
-  availabilitySlot.booked = true;
-
-  // Save the changes
-  db.get('bookAppointment').push({doctorId, day, startTime}).write();
-
-  // Return success response
-  res.json({message: 'Appointment booked successfully'});
-});
-
-// Use custom render function to handle responses
-server.use((req, res, next) => {
-  if (req.originalUrl === '/book-appointment') {
-    res.status(200).jsonp(res.locals.data);
-  } else {
-    next();
+// GET all doctors
+app.get('/doctors', async (req, res) => {
+  try {
+    const data = await fs.readFile(DB_FILE, 'utf8');
+    const doctors = JSON.parse(data).doctors;
+    res.json(doctors);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({message: 'Internal server error'});
   }
 });
 
-server.use(router);
+// POST a new doctor
+app.post('/doctors', async (req, res) => {
+  const newDoctor = req.body;
+  try {
+    const data = await fs.readFile(DB_FILE, 'utf8');
+    const doctors = JSON.parse(data).doctors;
+    newDoctor.id = doctors.length;
+    doctors.push(newDoctor);
+    await fs.writeFile(DB_FILE, JSON.stringify({doctors}));
+    res.status(201).json({message: 'Doctor created successfully'});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({message: 'Internal server error'});
+  }
+});
 
-server.listen(port);
+// book doctor appointment
+app.put('/doctors/:id/availability', async (req, res) => {
+  const doctorId = req.params.id;
+  const updatedAvailability = req.body.availability;
+  try {
+    const data = await fs.readFile(DB_FILE, 'utf8');
+    let {doctors} = JSON.parse(data);
+    doctors = doctors.map((doctor) => {
+      if (doctor.id === doctorId) {
+        doctor.availability = updatedAvailability;
+      }
+      return doctor;
+    });
+    await fs.writeFile(DB_FILE, JSON.stringify({doctors}));
+    res.json({message: 'Doctor availability updated successfully'});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({message: 'Internal server error'});
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
