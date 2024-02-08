@@ -5,6 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_FILE = 'db.json';
 
+app.use(cors());
 app.use(express.json());
 
 // GET all doctors
