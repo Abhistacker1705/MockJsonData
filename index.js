@@ -31,7 +31,7 @@ app.get('/doctors/:name/availability', async (req, res) => {
     );
     if (existingDoctor) {
       return res.status(200).json(existingDoctor);
-    }
+    } else return res.status(402).json({message: 'No user found'});
   } catch (error) {
     console.error(error);
     res.status(500).json({message: 'Internal server error'});
