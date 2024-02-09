@@ -21,6 +21,23 @@ app.get('/doctors', async (req, res) => {
   }
 });
 
+// GET a doctor's availability data
+app.get('/doctors/:name/availability', async (req, res) => {
+  try {
+    const data = await fs.readFile(DB_FILE, 'utf8');
+    const doctors = JSON.parse(data).doctors;
+    const existingDoctor = doctors.find(
+      (doctor) => doctor.name === req.params.name
+    );
+    if (existingDoctor) {
+      return res.status(200).json(existingDoctor);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({message: 'Internal server error'});
+  }
+});
+
 // POST a new doctor
 app.post('/doctors', async (req, res) => {
   const newDoctor = req.body;
