@@ -43,24 +43,25 @@ app.post('/doctors', async (req, res) => {
   const newDoctor = req.body;
   try {
     const data = await fs.readFile(DB_FILE, 'utf8');
-    const doctors = JSON.parse(data).doctors;
-    const existingDoctor = doctors.find(
-      (doctor) => doctor.name === req.body.name
+    const parsedData = JSON.parse(data);
+    let {doctors} = parsedData;
+    const existingDoctorIndex = doctors.findIndex(
+      (doctor) => doctor.name === newDoctor.name
     );
-    if (existingDoctor) {
-      doctors = doctors.map((doctor) => {
-        if (doctor.name === existingDoctor.name) {
-          doctor.availability = newDoctor.availability;
-        }
-        return doctor;
+
+    if (existingDoctorIndex !== -1) {
+      doctors[existingDoctorIndex].availability = newDoctor.availability;
+      await fs.writeFile(DB_FILE, JSON.stringify(parsedData));
+      res.json({
+        message: 'Availability updated successfully',
+        data: existingDoctorIndex,
       });
-      await fs.writeFile(DB_FILE, JSON.stringify({doctors}));
-      res.json({message: 'Availability updated successfully'});
+    } else {
+      newDoctor.id = String(doctors.length + 1);
+      doctors.push(newDoctor);
+      await fs.writeFile(DB_FILE, JSON.stringify(parsedData));
+      res.status(201).json({message: 'Doctor created successfully'});
     }
-    newDoctor.id = String(doctors.length + 1);
-    doctors.push(newDoctor);
-    await fs.writeFile(DB_FILE, JSON.stringify({doctors}));
-    res.status(201).json({message: 'Doctor created successfully'});
   } catch (error) {
     console.error(error);
     res.status(500).json({message: 'Internal server error'});
