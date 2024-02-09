@@ -24,6 +24,14 @@ app.get('/doctors', async (req, res) => {
 // POST a new doctor
 app.post('/doctors', async (req, res) => {
   const newDoctor = req.body;
+  const data = await fs.readFile(DB_FILE, 'utf8');
+  const doctors = JSON.parse(data).doctors;
+  doctors = doctors.map((doctor) => {
+    if (doctor.name === newDoctor.name) {
+      res.status(402).json({message: 'Doctor Already Exist '});
+      return;
+    }
+  });
   try {
     const data = await fs.readFile(DB_FILE, 'utf8');
     const doctors = JSON.parse(data).doctors;
