@@ -48,7 +48,14 @@ app.post('/doctors', async (req, res) => {
       (doctor) => doctor.name === req.body.name
     );
     if (existingDoctor) {
-      return res.status(402).json({message: 'Doctor Already Exist'});
+      doctors = doctors.map((doctor) => {
+        if (doctor.name === existingDoctor.name) {
+          doctor.availability = newDoctor.availability;
+        }
+        return doctor;
+      });
+      await fs.writeFile(DB_FILE, JSON.stringify({doctors}));
+      res.json({message: 'Availability updated successfully'});
     }
     newDoctor.id = String(doctors.length + 1);
     doctors.push(newDoctor);
