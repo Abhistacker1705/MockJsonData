@@ -52,9 +52,8 @@ app.post('/doctors', async (req, res) => {
     if (existingDoctorIndex !== -1) {
       doctors[existingDoctorIndex].availability = newDoctor.availability;
       await fs.writeFile(DB_FILE, JSON.stringify(parsedData));
-      res.json({
+      res.status(201).json({
         message: 'Availability updated successfully',
-        data: existingDoctorIndex,
       });
     } else {
       newDoctor.id = String(doctors.length + 1);
